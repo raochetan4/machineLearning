@@ -1,0 +1,156 @@
+---
+title: "Machine Learning Assignment: Prediction Assignment Writeup"
+author: "Chetan Rao"
+date: "February 27, 2016"
+output: html_document
+---
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Prediction Assignment Writeup Introduction
+Assignment Background Information:
+Use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+The training data for this project are available here:
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+GOAL: Predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. 
+Link to a Github repo with your R markdown and compiled HTML file describing your analysis.
+How you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+
+
+SOURCE: All the data here is referenced from:
+http://groupware.les.inf.puc-rio.br/har
+
+### Load Training and Testing Dataset
+```{r }
+trainUrl<-'https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv'
+testUrl<-'https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv'
+#trainData <- read.csv(url(trainUrl), header=TRUE, sep=",")
+#testData <- read.csv(url(testUrl), header=TRUE, sep=",")
+trainData <- read.csv(file="C:\\coursera\\machineLearning\\data\\pml-training.csv", header=TRUE, sep=",")
+testData <- read.csv(file="C:\\coursera\\machineLearning\\data\\pml-testing.csv", header=TRUE, sep=",")
+
+```
+
+### Cleansing the Dataset. Dimensionality Reduction
+1) Removing NA on row basis does not help instead since we are in search for predictor variables so remove the columns with more number of NAs or which are not very useful. 
+2) Remove first 5 columns as username and timeStamps are irrelevant to predict the classe.
+3) classe as a factor Variable 
+4) From testData remove problem_id
+5) Use dimensionality reduction technique to reduce time constraint.
+
+```{r include=FALSE, cache=FALSE}
+library(caret)
+trainData<-trainData[,-(1:7)]
+testData<-testData[,-(1:7)]
+# The number of NAs if more than half the number of rows we will ignore those columns
+useful <- !apply(trainData, 2, function(x) sum(is.na(x)) > 0.5*length(trainData[,1])  || sum(x=="") >  0.5*length(trainData[,1]))
+trainData<-trainData[,useful]
+testData <-testData[,useful]
+#Find all the columns with zero variance. These columns will not have a lot of information and hence we will remove them.
+zeroVarColumns <- nearZeroVar(trainData, saveMetrics = TRUE)
+trainData <- trainData[,zeroVarColumns$nzv==FALSE]
+testData <-testData[,zeroVarColumns$nzv==FALSE]
+# Also create a factore variable for classe
+trainData$classe <- factor(trainData$classe)
+testData$classe <- NA
+#Find how many Principal Components are the most important ones
+prComp <- prcomp(trainData[,-53])
+plot(cumsum(prComp$sdev^2/sum(prComp$sdev^2)), xlab = "Variables", ylab="Cumulative Variance")
+#Looking at the plot very carefully we see somewhere near 12 components are what contribute to the most variance. So lets do some dimentionality Reduction and Use 12 prinComp for training the model
+preProc <- preProcess(trainData[,-53],method="pca",pcaComp=12)
+prinComponents<-predict(preProc,trainData[,-53])
+prinComponents$classe <- trainData$classe
+# Apply same steps to testData but use the preProc from above. PreProc defines the features to be extracted from any random data set as predictor variables.
+test_prinComponents<-predict(preProc,testData[,-(53:54)])
+test_prinComponents$classe <- testData$classe
+```
+
+### Training And Validation Data Sets using Caret
+```{r}
+set.seed(1234)
+#Now use the principal Components to  as the predictor variables to train the model.
+inTrain<-createDataPartition(trainData$classe,p=3/4,list=FALSE)
+trainingSubset<-prinComponents[inTrain,]
+validationSet<-prinComponents[-inTrain,]
+inTrain<-createDataPartition(validationSet$classe,p=3/4,list=FALSE)
+ValidationSetForTest <- validationSet[-inTrain,]
+validationSet <- validationSet[inTrain,]
+```
+
+### Create models using various prediction algorithms
+```{r include=FALSE, cache=FALSE}
+# Let us Train Data using 3 different models namely "gbm-Generalized Boosted Models", "pls-Partial Least Squares". "lda - Linear Discriminant Analysis" and "rf-random forest". 
+library(pls)
+library(MASS)
+library(randomForest)
+#skipping the below model generation in order to save time. I saved the workspace for each model separately and loaded it. Now I do not have to rerun this again.
+#model1 <- train(classe~., data=trainingSubset, method="gbm")
+#model2 <- train(classe~., data=trainingSubset, method="pls")
+#model3 <- train(classe~., data=trainingSubset, method="lda")
+#model4 <- train(classe~., data=trainingSubset, method="rf")
+load("C:/coursera/machineLearning/model1gbm.RData")
+load("C:/coursera/machineLearning/model2pls_3lda.RData")
+load("C:/coursera/machineLearning/model4rf.RData")
+```
+
+### Cross Validating using the ValidationDataSet and Calculating the Confusion Matrix.
+```{r}
+predict1_gbm <- predict(model1,validationSet)
+predict2_pls <- predict(model2,validationSet)
+predict3_lda <- predict(model3,validationSet)
+predict4_rf <- predict(model4,validationSet)
+confusionMatrix(predict1_gbm,validationSet$classe)
+confusionMatrix(predict2_pls,validationSet$classe)
+confusionMatrix(predict3_lda,validationSet$classe)
+confusionMatrix(predict4_rf,validationSet$classe)
+```
+
+### out-of-sample Error
+```{r}
+#Find the best fit based of Cross Validation
+predict1_gbm <- predict(model1,ValidationSetForTest)
+predict2_pls <- predict(model2,ValidationSetForTest)
+predict3_lda <- predict(model3,ValidationSetForTest)
+predict4_rf <- predict(model4,ValidationSetForTest)
+confusionMatrix(predict1_gbm,ValidationSetForTest$classe)
+confusionMatrix(predict2_pls,ValidationSetForTest$classe)
+confusionMatrix(predict3_lda,ValidationSetForTest$classe)
+confusionMatrix(predict4_rf,ValidationSetForTest$classe)
+trueClass<-ValidationSetForTest$classe
+# Visually we could check the below results and see some differences. Which is also provided by confusionMatrix. 
+df<-cbind(predict1_gbm,predict2_pls,predict3_lda,predict4_rf,trueClass)
+tail(df)
+Xax<-1:length(trueClass)
+
+plot(Xax,trueClass,col='white')
+lines(predict1_gbm, type="o", pch=22, lty=2, col="red")
+lines(trueClass, type="o", pch=22, lty=2, col="black")
+title(main="Generalized Boosted Model (GBM) Prediction for CV data set Vs TrueClass",cex.main=1, col.main="red", font.main=2)
+
+plot(Xax,trueClass,col='white')
+lines(predict2_pls, type="o", pch=22, lty=2, col="blue")
+lines(trueClass, type="o", pch=22, lty=2, col="black")
+title(main="PARTIAL LEAST SQUARES (PLS) model Prediction for CV data set Vs TrueClass",cex.main=1, col.main="blue", font.main=2)
+
+plot(Xax,trueClass,col='white')
+lines(predict3_lda, type="o", pch=22, lty=2, col="darkslateblue")
+lines(trueClass, type="o", pch=22, lty=2, col="black")
+title(main="Linear Discriminant Analysis (LDA) model Prediction for CV data set Vs TrueClass",cex.main=1, col.main="darkslateblue", font.main=2)
+
+plot(Xax,trueClass,col='white')
+lines(predict4_rf, type="o", pch=22, lty=2, col="darkgreen")
+lines(trueClass, type="o", pch=22, lty=2, col="black")
+title(main="Random Forest (RF) model Prediction for CV data set Vs TrueClass",cex.main=1, col.main="darkgreen", font.main=2)
+```
+
+### Predict the 20 data set using the rainForest model#4 as it gave the maximum accuracy
+```{r}
+test_prinComponents$classe <- predict(model4,test_prinComponents[,-13])
+# Results for the 20 test Cases
+cbind(testData$problem_id,as.character(test_prinComponents$classe))
+```
