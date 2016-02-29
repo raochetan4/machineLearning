@@ -29,10 +29,10 @@ http://groupware.les.inf.puc-rio.br/har
 ```{r }
 trainUrl<-'https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv'
 testUrl<-'https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv'
-#trainData <- read.csv(url(trainUrl), header=TRUE, sep=",")
-#testData <- read.csv(url(testUrl), header=TRUE, sep=",")
-trainData <- read.csv(file="C:\\coursera\\machineLearning\\data\\pml-training.csv", header=TRUE, sep=",")
-testData <- read.csv(file="C:\\coursera\\machineLearning\\data\\pml-testing.csv", header=TRUE, sep=",")
+trainData <- read.csv(url(trainUrl), header=TRUE, sep=",")
+testData <- read.csv(url(testUrl), header=TRUE, sep=",")
+#trainData <- read.csv(file="C:\\coursera\\machineLearning\\data\\pml-training.csv", header=TRUE, sep=",")
+#testData <- read.csv(file="C:\\coursera\\machineLearning\\data\\pml-testing.csv", header=TRUE, sep=",")
 
 ```
 
@@ -89,13 +89,13 @@ library(pls)
 library(MASS)
 library(randomForest)
 #skipping the below model generation in order to save time. I saved the workspace for each model separately and loaded it. Now I do not have to rerun this again.
-#model1 <- train(classe~., data=trainingSubset, method="gbm")
-#model2 <- train(classe~., data=trainingSubset, method="pls")
-#model3 <- train(classe~., data=trainingSubset, method="lda")
-#model4 <- train(classe~., data=trainingSubset, method="rf")
-load("C:/coursera/machineLearning/model1gbm.RData")
-load("C:/coursera/machineLearning/model2pls_3lda.RData")
-load("C:/coursera/machineLearning/model4rf.RData")
+model1 <- train(classe~., data=trainingSubset, method="gbm")
+model2 <- train(classe~., data=trainingSubset, method="pls")
+model3 <- train(classe~., data=trainingSubset, method="lda")
+model4 <- train(classe~., data=trainingSubset, method="rf")
+#load("C:/coursera/machineLearning/model1gbm.RData")
+#load("C:/coursera/machineLearning/model2pls_3lda.RData")
+#load("C:/coursera/machineLearning/model4rf.RData")
 ```
 
 ### Cross Validating using the ValidationDataSet and Calculating the Confusion Matrix.
