@@ -475,28 +475,28 @@ title(main=&quot;Random Forest (RF) model Prediction for CV data set Vs TrueClas
 <h3>Predict the 20 data set using the rainForest model#4 as it gave the maximum accuracy</h3>
 <pre class="r"><code>test_prinComponents$classe &lt;- predict(model4,test_prinComponents[,-13])
 # Results for the 20 test Cases
-cbind(testData[,53],test_prinComponents$classe)</code></pre>
+cbind(testData$problem_id,as.character(test_prinComponents$classe))</code></pre>
 <pre><code>##       [,1] [,2]
-##  [1,]    1    2
-##  [2,]    2    1
-##  [3,]    3    2
-##  [4,]    4    1
-##  [5,]    5    1
-##  [6,]    6    5
-##  [7,]    7    4
-##  [8,]    8    2
-##  [9,]    9    1
-## [10,]   10    1
-## [11,]   11    2
-## [12,]   12    3
-## [13,]   13    2
-## [14,]   14    1
-## [15,]   15    5
-## [16,]   16    5
-## [17,]   17    1
-## [18,]   18    2
-## [19,]   19    2
-## [20,]   20    2</code></pre>
+##  [1,] &quot;1&quot;  &quot;B&quot; 
+##  [2,] &quot;2&quot;  &quot;A&quot; 
+##  [3,] &quot;3&quot;  &quot;B&quot; 
+##  [4,] &quot;4&quot;  &quot;A&quot; 
+##  [5,] &quot;5&quot;  &quot;A&quot; 
+##  [6,] &quot;6&quot;  &quot;E&quot; 
+##  [7,] &quot;7&quot;  &quot;D&quot; 
+##  [8,] &quot;8&quot;  &quot;B&quot; 
+##  [9,] &quot;9&quot;  &quot;A&quot; 
+## [10,] &quot;10&quot; &quot;A&quot; 
+## [11,] &quot;11&quot; &quot;B&quot; 
+## [12,] &quot;12&quot; &quot;C&quot; 
+## [13,] &quot;13&quot; &quot;B&quot; 
+## [14,] &quot;14&quot; &quot;A&quot; 
+## [15,] &quot;15&quot; &quot;E&quot; 
+## [16,] &quot;16&quot; &quot;E&quot; 
+## [17,] &quot;17&quot; &quot;A&quot; 
+## [18,] &quot;18&quot; &quot;B&quot; 
+## [19,] &quot;19&quot; &quot;B&quot; 
+## [20,] &quot;20&quot; &quot;B&quot;</code></pre>
 </div>
 </div>
 
